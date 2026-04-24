@@ -2,14 +2,30 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>矩將科技MicroLab - 3D Model</title>
+    <title>矩將科技MicroLab - 3D 產品檢視器</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #eeeeee; } /* 換成淺灰色背景 */
-        #info { position: absolute; top: 10px; width: 100%; text-align: center; color: #333; font-family: sans-serif; pointer-events: none; z-index: 10; }
+        body { margin: 0; overflow: hidden; background-color: #eeeeee; font-family: sans-serif; }
+        #info { position: absolute; top: 10px; width: 100%; text-align: center; color: #333; pointer-events: none; z-index: 10; font-size: 20px; font-weight: bold; }
+        
+        /* 選單樣式 */
+        #ui-container { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); z-index: 20; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        select { font-size: 16px; padding: 5px 10px; cursor: pointer; }
+        
+        #loading-label { position: absolute; bottom: 20px; width: 100%; text-align: center; color: #666; display: none; }
     </style>
 </head>
 <body>
-    <div id="info">正在載入模型...</div>
+    <div id="info">產品展示系統</div>
+
+    <div id="ui-container">
+        <label for="product-select">選擇產品：</label>
+        <select id="product-select">
+            <option value="G28">內藏式內徑研磨主軸 G28-LMSN</option>
+            <option value="H6">內藏式主軸 M4-HMSC (H6-HMSC-QAC)</option>
+        </select>
+    </div>
+
+    <div id="loading-label">正在切換模型...</div>
 
     <script type="importmap">
         {
@@ -28,69 +44,97 @@
 
         // 1. 基本場景設定
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xdddddd); // 設定場景背景為淺灰色
+        scene.background = new THREE.Color(0xdddddd);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        // 強化亮度設定
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.8; 
+        
         document.body.appendChild(renderer.domElement);
 
         // 2. 強化光源設定
-        // 增加環境光亮度，確保黑色材質也有基本的反光
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1.5); 
-        scene.add(ambientLight);
+        scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+        scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.5));
 
-        // 強度設為 2.0
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2.0);
-        scene.add(hemiLight);
-
-        // 設定多個方向燈，消除死角
-        const light1 = new THREE.DirectionalLight(0xffffff, 1);
-        light1.position.set(10, 10, 10);
+        const light1 = new THREE.DirectionalLight(0xffffff, 2.0);
+        light1.position.set(10, 20, 10);
         scene.add(light1);
 
-        const light2 = new THREE.DirectionalLight(0xffffff, 0.8);
-        light2.position.set(-10, 5, -10);
+        const light2 = new THREE.DirectionalLight(0xffffff, 1.0);
+        light2.position.set(-10, 10, -10);
         scene.add(light2);
 
         const controls = new OrbitControls(camera, renderer.domElement);
+        let currentModel = null;
 
-        // 3. 檔案路徑
-        const mtlUrl = 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G28-LMSN(P.47).mtl';
-        const objUrl = 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G28-LMSN(P.47).obj';
+        // 產品資料清單
+        const products = {
+            'G28': {
+                name: '內藏式內徑研磨主軸 G28-LMSN',
+                obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G28-LMSN(P.47).obj',
+                mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G28-LMSN(P.47).mtl'
+            },
+            'H6': {
+                name: '內藏式主軸 M4-HMSC',
+                obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/H6-HMSC-QAC(P.28).obj',
+                mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/H6-HMSC-QAC(P.28).mtl'
+            }
+        };
 
-        // 4. 執行載入
-        const mtlLoader = new MTLLoader();
-        mtlLoader.setCrossOrigin('anonymous'); 
+        // 3. 載入模型的函數
+        function loadProduct(productId) {
+            const product = products[productId];
+            const loadingLabel = document.getElementById('loading-label');
+            loadingLabel.style.display = 'block';
 
-        mtlLoader.load(mtlUrl, (materials) => {
-            materials.preload();
+            // 移除舊模型
+            if (currentModel) {
+                scene.remove(currentModel);
+            }
+
+            const mtlLoader = new MTLLoader();
+            mtlLoader.setCrossOrigin('anonymous');
             
-            const objLoader = new OBJLoader();
-            objLoader.setMaterials(materials);
-            
-            objLoader.load(objUrl, (object) => {
-                scene.add(object);
+            mtlLoader.load(product.mtl, (materials) => {
+                materials.preload();
+                const objLoader = new OBJLoader();
+                objLoader.setMaterials(materials);
+                
+                objLoader.load(product.obj, (object) => {
+                    currentModel = object;
+                    scene.add(currentModel);
 
-                // 自動置中與縮放
-                const box = new THREE.Box3().setFromObject(object);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
-                const maxDim = Math.max(size.x, size.y, size.z);
+                    // 自動對焦
+                    const box = new THREE.Box3().setFromObject(currentModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    const maxDim = Math.max(size.x, size.y, size.z);
 
-                object.position.sub(center); 
-                camera.position.set(0, maxDim * 0.5, maxDim * 1.5);
-                controls.update();
+                    currentModel.position.sub(center); 
+                    camera.position.set(0, maxDim * 0.5, maxDim * 1.5);
+                    controls.target.set(0, 0, 0);
+                    controls.update();
 
-                document.getElementById('info').innerText = "內藏式內徑研磨主軸 G28-LMSN";
+                    document.getElementById('info').innerText = product.name;
+                    loadingLabel.style.display = 'none';
+                });
             }, undefined, (err) => {
-                console.error('模型錯誤', err);
+                console.error('載入失敗', err);
+                loadingLabel.innerText = "載入失敗，請檢查網路連結";
             });
+        }
 
-        }, undefined, (err) => {
-            console.error('材質錯誤', err);
-            document.getElementById('info').innerText = "材質載入失敗";
+        // 4. 綁定選單事件
+        document.getElementById('product-select').addEventListener('change', (e) => {
+            loadProduct(e.target.value);
         });
+
+        // 初始載入第一個產品
+        loadProduct('G28');
 
         function animate() {
             requestAnimationFrame(animate);
