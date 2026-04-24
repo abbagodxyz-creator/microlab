@@ -61,14 +61,14 @@
         <div class="control-group">
             <label>1. 選擇產品系列：</label>
             <select id="category-select">
-                <option value="internal_grinding">內藏式內徑研磨主軸系列</option>
                 <option value="machining_center">加工中心內藏式系列</option>
+                <option value="internal_grinding">內藏式內徑研磨主軸系列</option>
                 <option value="dresser">磨床內藏式修砂輪系列</option>
             </select>
         </div>
 
         <div class="control-group">
-            <label id="spec-label">2. 選擇套筒外徑：</label>
+            <label id="spec-label">2. 選擇規格：</label>
             <select id="spec-select"></select>
         </div>
 
@@ -116,78 +116,60 @@
         controls.enableDamping = true;
         let currentModel = null;
 
+        // 重新排序後的資料庫
         const productDatabase = {
-            'internal_grinding': {
-                'label': '2. 選擇套筒外徑：',
-                'options': {
-                    'Ø80': {
-                        id: 'G08',
-                        name: 'G08-QMS (內藏式內徑研磨)',
-                        obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G08-QMS(P.46).obj',
-                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G08-QMS(P.46).mtl',
-                        specs: `
-                            <tr><th>最高轉速 RPM</th><td>60000</td></tr>
-                            <tr><th>軸承數目</th><td>4</td></tr>
-                            <tr><th>功率</th><td>5 KW</td></tr>
-                            <tr><th>前軸承直徑</th><td>Ø15</td></tr>
-                            <tr><th>套筒外徑</th><td>Ø80</td></tr>
-                            <tr><th>鼻端內牙</th><td>M8 x P1.25</td></tr>
-                        `
-                    },
-                    'Ø120': {
-                        id: 'G28',
-                        name: 'G28-LMSN (內藏式內徑研磨)',
-                        obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G28-LMSN(P.47).obj',
-                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G28-LMSN(P.47).mtl',
-                        specs: `
-                            <tr><th>最高轉速 RPM</th><td>10000 / 20000 / 30000 / 36000</td></tr>
-                            <tr><th>軸承數目</th><td>4-5</td></tr>
-                            <tr><th>功率</th><td>8.2 KW</td></tr>
-                            <tr><th>前軸承直徑</th><td>Ø40</td></tr>
-                            <tr><th>套筒外徑</th><td>Ø120</td></tr>
-                            <tr><th>鼻端內牙</th><td>M28 x P2.0</td></tr>
-                        `
-                    }
-                }
-            },
             'machining_center': {
-                'label': '2. 選擇套筒外徑：',
+                'label': '2. 選擇套筒外徑 (型號)：',
                 'options': {
-                    'Ø62': { isPlaceholder: true }, 'Ø80': { isPlaceholder: true }, 'Ø100': { isPlaceholder: true },
+                    'Ø62': { isPlaceholder: true }, 'Ø80': { isPlaceholder: true },
+                    'Ø100 (E25-GMS)': {
+                        id: 'E25', name: 'E25-GMS (加工中心內藏式)',
+                        obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/E25-GMS(P.33-1).obj',
+                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/E25-GMS(P.33-1).mtl',
+                        specs: `<tr><th>最高轉速 RPM</th><td>24000-30000</td></tr><tr><th>刀具規格</th><td>ER25筒夾</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>功率</th><td>3.7 KW</td></tr><tr><th>前軸承直徑</th><td>Ø30</td></tr><tr><th>套筒外徑</th><td>Ø100</td></tr>`
+                    },
+                    'Ø100 (M25-GMSV)': {
+                        id: 'M25', name: 'M25-GMSV (加工中心內藏式)',
+                        obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/M25-GMSV(P.33-2).obj',
+                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/M25-GMSV(P.33-2).mtl',
+                        specs: `<tr><th>最高轉速 RPM</th><td>24000-30000</td></tr><tr><th>刀具規格</th><td>ISO25、HSK32E</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>編碼器</th><td>(OP)</td></tr><tr><th>功率</th><td>3.7 KW</td></tr><tr><th>前軸承直徑</th><td>Ø30</td></tr><tr><th>套筒外徑</th><td>Ø100</td></tr><tr><th>備註</th><td>氣壓換刀</td></tr>`
+                    },
                     'Ø120': { isPlaceholder: true }, 'Ø140': { isPlaceholder: true }, 'Ø150': { isPlaceholder: true },
                     'Ø170': { isPlaceholder: true }, 'Ø202': { isPlaceholder: true },
-                    'Ø210': {
-                        id: 'H6',
-                        name: 'H6-HMSC-QA (加工中心內藏式)',
+                    'Ø210 (H6-HMSC-QA)': {
+                        id: 'H6', name: 'H6-HMSC-QA (加工中心內藏式)',
                         obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/H6-HMSC-QAC(P.28).obj',
-                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/heads/main/H6-HMSC-QAC(P.28).mtl',
-                        specs: `
-                            <tr><th>最高轉速 RPM</th><td>20000 - 24000</td></tr>
-                            <tr><th>刀具規格</th><td>HSK63A</td></tr>
-                            <tr><th>軸承數目</th><td>4</td></tr>
-                            <tr><th>功率</th><td>18 KW</td></tr>
-                            <tr><th>前軸承直徑</th><td>Ø65</td></tr>
-                            <tr><th>套筒外徑</th><td>Ø210</td></tr>
-                            <tr><th>中心出水 / 環形噴水</th><td>(OP) / (ST)</td></tr>
-                            <tr><th>備註</th><td>油壓打刀 / 氣壓回位</td></tr>
-                        `
+                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/H6-HMSC-QAC(P.28).mtl',
+                        specs: `<tr><th>最高轉速 RPM</th><td>20000 - 24000</td></tr><tr><th>刀具規格</th><td>HSK63A</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>功率</th><td>18 KW</td></tr><tr><th>前軸承直徑</th><td>Ø65</td></tr><tr><th>套筒外徑</th><td>Ø210</td></tr><tr><th>中心出水 / 環形噴水</th><td>(OP) / (ST)</td></tr><tr><th>備註</th><td>油壓打刀 / 氣壓回位</td></tr>`
                     },
                     'Ø240': { isPlaceholder: true }, 'Ø275': { isPlaceholder: true }, 'Ø300': { isPlaceholder: true }
                 }
             },
-            'dresser': {
-                'label': '2. 選擇鼻端外徑：',
+            'internal_grinding': {
+                'label': '2. 選擇套筒外徑 (型號)：',
                 'options': {
-                    'Ø30': {
-                        id: 'G0B',
-                        name: 'G0B-PMS (磨床內藏式修砂輪)',
+                    'Ø80 (G08-QMS)': {
+                        id: 'G08', name: 'G08-QMS (內藏式內徑研磨)',
+                        obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G08-QMS(P.46).obj',
+                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G08-QMS(P.46).mtl',
+                        specs: `<tr><th>最高轉速 RPM</th><td>60000</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>功率</th><td>5 KW</td></tr><tr><th>前軸承直徑</th><td>Ø15</td></tr><tr><th>套筒外徑</th><td>Ø80</td></tr><tr><th>鼻端內牙</th><td>M8 x P1.25</td></tr>`
+                    },
+                    'Ø120 (G28-LMSN)': {
+                        id: 'G28', name: 'G28-LMSN (內藏式內徑研磨)',
+                        obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G28-LMSN(P.47).obj',
+                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G28-LMSN(P.47).mtl',
+                        specs: `<tr><th>最高轉速 RPM</th><td>10000 / 20000 / 30000 / 36000</td></tr><tr><th>軸承數目</th><td>4-5</td></tr><tr><th>功率</th><td>8.2 KW</td></tr><tr><th>前軸承直徑</th><td>Ø40</td></tr><tr><th>套筒外徑</th><td>Ø120</td></tr><tr><th>鼻端內牙</th><td>M28 x P2.0</td></tr>`
+                    }
+                }
+            },
+            'dresser': {
+                'label': '2. 選擇鼻端外徑 (型號)：',
+                'options': {
+                    'Ø30 (G0B-PMS)': {
+                        id: 'G0B', name: 'G0B-PMS (磨床內藏式修砂輪)',
                         obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G0B-PMS(P.51).obj',
                         mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G0B-PMS(P.51).mtl',
-                        specs: `
-                            <tr><th>標準功率</th><td>2 KW</td></tr>
-                            <tr><th>鼻端外徑</th><td>Ø30</td></tr>
-                            <tr><th>套筒尺寸</th><td>方形 80</td></tr>
-                        `
+                        specs: `<tr><th>標準功率</th><td>2 KW</td></tr><tr><th>鼻端外徑</th><td>Ø30</td></tr><tr><th>套筒尺寸</th><td>方形 80</td></tr>`
                     }
                 }
             }
@@ -200,36 +182,35 @@
         function updateSpecOptions() {
             const categoryKey = categorySelect.value;
             const categoryData = productDatabase[categoryKey];
-            
             specLabel.innerText = categoryData.label;
             specSelect.innerHTML = ''; 
             
-            Object.keys(categoryData.options).forEach(size => {
+            Object.keys(categoryData.options).forEach(displayText => {
                 const opt = document.createElement('option');
-                opt.value = size;
-                opt.textContent = size;
+                opt.value = displayText;
+                opt.textContent = displayText;
                 specSelect.appendChild(opt);
             });
 
-            // 保持原本預設
-            if (categoryKey === 'internal_grinding') specSelect.value = 'Ø120';
-            else if (categoryKey === 'machining_center') specSelect.value = 'Ø210';
-            else if (categoryKey === 'dresser') specSelect.value = 'Ø30';
+            // 調整預設啟動選中的產品
+            if (categoryKey === 'machining_center') specSelect.value = 'Ø100 (M25-GMSV)';
+            else if (categoryKey === 'internal_grinding') specSelect.value = 'Ø120 (G28-LMSN)';
+            else if (categoryKey === 'dresser') specSelect.value = 'Ø30 (G0B-PMS)';
 
             handleProductChange();
         }
 
         function handleProductChange() {
             const categoryKey = categorySelect.value;
-            const size = specSelect.value;
-            const product = productDatabase[categoryKey].options[size];
+            const selectedKey = specSelect.value;
+            const product = productDatabase[categoryKey].options[selectedKey];
 
             if (product && !product.isPlaceholder) {
                 loadModel(product);
             } else {
-                document.getElementById('spec-body').innerHTML = '<tr><td colspan="2">該規格暫無 3D 模型資料</td></tr>';
+                document.getElementById('spec-body').innerHTML = '<tr><td colspan="2" style="color: #999; height: 100px;">該規格暫無 3D 模型資料</td></tr>';
                 if (currentModel) scene.remove(currentModel);
-                document.getElementById('info').innerText = "暫無資料";
+                document.getElementById('info').innerText = "尚未提供模型";
                 document.getElementById('loading-label').style.display = 'none';
             }
         }
@@ -260,9 +241,6 @@
                     document.getElementById('info').innerText = product.name;
                     document.getElementById('loading-label').style.display = 'none';
                 });
-            }, undefined, (error) => {
-                console.error("載入出錯", error);
-                document.getElementById('loading-label').innerText = "載入出錯";
             });
         }
 
@@ -282,6 +260,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        // 初始化：預設會執行 machining_center
         updateSpecOptions();
     </script>
 </body>
