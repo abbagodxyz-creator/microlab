@@ -51,8 +51,8 @@
             font-size: 16px;
         }
         .highlight-val {
-            color: #ff0000; /* 紅色 */
-            font-weight: bold; /* 加上粗體可以讓型號在表格中更醒目（可選） */
+            color: #ff0000;
+            font-weight: bold;
         }
 
         #loading-label { position: absolute; bottom: 20px; width: 100%; text-align: center; color: #ffffff; display: none; font-weight: bold; }
@@ -103,27 +103,43 @@
         import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
         import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // 匯入室內環境模組，用於產生真實金屬反射
+        import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(161/255, 161/255, 161/255);
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);
+        
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 1.6; 
         document.body.appendChild(renderer.domElement);
 
+        // --- 新增：建立環境反射光 ---
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+        // ---------------------------
+
+        // --- 修改：增強燈光設置，消除陰影並提高亮度 ---
         scene.add(new THREE.AmbientLight(0xffffff, 1.0));
         scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
+        
+        // 主燈光 (上方前右)
         const light1 = new THREE.DirectionalLight(0xffffff, 2.0);
         light1.position.set(20, 40, 20);
         scene.add(light1);
+
+        // 新增補光 (下方後左)
+        const light2 = new THREE.DirectionalLight(0xffffff, 1.2); // 較低強度的補光，消除過重陰影
+        light2.position.set(-20, -10, -20);
+        scene.add(light2);
+        // ------------------------------------------
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         let currentModel = null;
 
-        // 重新排序與排版後的資料庫
         const productDatabase = {
             'machining_center': {
                 'label': '2. 選擇套筒外徑 (型號)：',
@@ -359,6 +375,26 @@
                 const objLoader = new OBJLoader();
                 objLoader.setMaterials(materials);
                 objLoader.load(product.obj, (object) => {
+                    
+                    // --- 修改：調整 PBR 材質參數，使其不那麼黑且呈現飽滿質感 ---
+                    object.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            const oldColor = child.material.color;
+                            
+                            // 判斷是否為黑色零件 (當 rgb 都極低時判定為黑色)
+                            const isBlackPart = (oldColor.r < 0.1 && oldColor.g < 0.1 && oldColor.b < 0.1);
+
+                            child.material = new THREE.MeshStandardMaterial({
+                                color: oldColor,
+                                // 金屬度：銀色稍微調低 (0.75)，不再刺眼，呈現拉絲鋼感；黑色調低，消除多餘反射
+                                metalness: isBlackPart ? 0.2 : 0.75, 
+                                // 粗糙度：銀色稍微調高 (0.22)，柔化反射，讓本體看起來更飽滿；黑色降低粗糙度，帶一點光澤
+                                roughness: isBlackPart ? 0.45 : 0.22 
+                            });
+                        }
+                    });
+                    // ----------------------------------------
+
                     currentModel = object;
                     scene.add(currentModel);
                     
