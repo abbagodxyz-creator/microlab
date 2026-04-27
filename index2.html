@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>矩將科技MicroLab - 3D 產品展示系統</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="info">產品展示系統</div>
+
+    <div id="ui-container">
+        <div class="control-group">
+            <label>1. 選擇產品系列：</label>
+            <select id="category-select">
+                <option value="machining_center">加工中心內藏式系列</option>
+                <option value="internal_grinding">內藏式內徑研磨主軸系列</option>
+                <option value="dresser">磨床內藏式修砂輪系列</option>
+                <option value="five_axis">五軸搖擺頭系列</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label id="spec-label">2. 選擇規格：</label>
+            <select id="spec-select"></select>
+        </div>
+
+        <div class="control-group" id="third-layer-group">
+            <label>3. 選擇刀具規格：</label>
+            <select id="tool-select"></select>
+        </div>
+
+        <div id="spec-container">
+            <div id="spec-content"></div>
+        </div>
+    </div>
+
+    <div id="loading-label">正在載入模型...</div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
