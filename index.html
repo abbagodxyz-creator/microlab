@@ -70,6 +70,7 @@
                 <option value="dresser">磨床內藏式修砂輪系列</option>
                 <option value="five_axis">五軸搖擺頭系列</option>
                 <option value="vertical_grinding">立式磨床專用主軸系列</option>
+                <option value="lathe_spindle">車床內藏式系列</option>
             </select>
         </div>
 
@@ -196,7 +197,6 @@
                     }
                 }
             },
-            // 新增：立式磨床專用主軸系列資料庫
             'vertical_grinding': {
                 'label': '2. 選擇套筒外徑 (型號)：',
                 'options': {
@@ -205,6 +205,36 @@
                         obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/H6-KMX(P.obj',
                         mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/H6-KMX(P.mtl',
                         specs: `<tr><th>最高轉速 RPM</th><td>8000-10000</td></tr><tr><th>刀具規格</th><td>HSK63A</td></tr><tr><th>軸承數目</th><td>5</td></tr><tr><th>功率</th><td>19 KW</td></tr><tr><th>前軸承直徑</th><td>Ø265</td></tr><tr><th>套筒外徑</th><td>Ø240</td></tr>`
+                    }
+                }
+            },
+            // 新增：車床內藏式系列資料庫
+            'lathe_spindle': {
+                'label': '2. 選擇套筒外徑 (型號)：',
+                'options': {
+                    'Ø190 (L4-LMS)': {
+                        id: 'L4-LMS', name: 'L4-LMS (車床內藏式)',
+                        obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/L4-LMS(P.43-1).obj',
+                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/L4-LMS(P.43-1).mtl',
+                        specs: `<tr><th>最高轉速 RPM</th><td>5000-6000</td></tr><tr><th>鼻端規格</th><td>A2-4</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>功率</th><td>8 KW</td></tr><tr><th>前軸承直徑</th><td>Ø80</td></tr><tr><th>套筒外徑</th><td>Ø190</td></tr><tr><th>通孔徑</th><td>Ø44</td></tr>`
+                    },
+                    'Ø230 (L5-GMK)': {
+                        id: 'L5-GMK', name: 'L5-GMK (車床內藏式)',
+                        obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/L5-GMK(P.43-2).obj',
+                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/L5-GMK(P.43-2).mtl',
+                        specs: `<tr><th>最高轉速 RPM</th><td>5000-6000</td></tr><tr><th>鼻端規格</th><td>A2-5</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>功率</th><td>7.9 KW</td></tr><tr><th>前軸承直徑</th><td>Ø100</td></tr><tr><th>套筒外徑</th><td>Ø230</td></tr><tr><th>通孔徑</th><td>Ø50</td></tr>`
+                    },
+                    'Ø280 (L6-UMK)': {
+                        id: 'L6-UMK', name: 'L6-UMK (車床內藏式)',
+                        obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/L6-UMK(P.44-1).obj',
+                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/L6-UMK(P.44-1).mtl',
+                        specs: `<tr><th>最高轉速 RPM</th><td>5000</td></tr><tr><th>鼻端規格</th><td>A2-6</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>功率</th><td>12 KW</td></tr><tr><th>前軸承直徑</th><td>Ø110</td></tr><tr><th>套筒外徑</th><td>Ø280</td></tr><tr><th>通孔徑</th><td>Ø75.5</td></tr>`
+                    },
+                    'Ø365 (L8-QMK)': {
+                        id: 'L8-QMK', name: 'L8-QMK (車床內藏式)',
+                        obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/L8-QMK(P.44-2).obj',
+                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/L8-QMK(P.44-2).mtl',
+                        specs: `<tr><th>最高轉速 RPM</th><td>3000</td></tr><tr><th>鼻端規格</th><td>A2-8</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>功率</th><td>30 KW</td></tr><tr><th>前軸承直徑</th><td>Ø150</td></tr><tr><th>套筒外徑</th><td>Ø365</td></tr><tr><th>通孔徑</th><td>Ø70</td></tr>`
                     }
                 }
             },
