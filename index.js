@@ -1,0 +1,333 @@
+import * as THREE from 'three';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(161/255, 161/255, 161/255);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 10000);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.6; 
+document.body.appendChild(renderer.domElement);
+
+// --- 建立環境反射光 ---
+const pmremGenerator = new THREE.PMREMGenerator(renderer);
+scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+// --- 增強燈光設置，消除陰影並提高亮度 ---
+scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
+
+// 主燈光 (上方前右)
+const light1 = new THREE.DirectionalLight(0xffffff, 2.0);
+light1.position.set(20, 40, 20);
+scene.add(light1);
+
+// 新增補光 (下方後左)
+const light2 = new THREE.DirectionalLight(0xffffff, 1.2); 
+light2.position.set(-20, -10, -20);
+scene.add(light2);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+let currentModel = null;
+
+const productDatabase = {
+    'machining_center': {
+        'label': '2. 選擇套筒外徑 (型號)：',
+        'options': {
+            'Ø62': { isPlaceholder: true }, 
+            'Ø80 (E16-QMS)': {
+                id: 'E16', name: 'E16-QMS (加工中心內藏式)',
+                obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/E16-QMS(P.31).obj',
+                mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/E16-QMS(P.31).mtl',
+                specs: `<tr><th>最高轉速 RPM</th><td>24000-30000</td></tr><tr><th>刀具規格</th><td>ER16筒夾、ER20筒夾</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>功率</th><td>1.5 KW</td></tr><tr><th>前軸承直徑</th><td>Ø30</td></tr><tr><th>套筒外徑</th><td>Ø80</td></tr>`
+            },
+            'Ø100 (E25-GMS)': {
+                id: 'E25', name: 'E25-GMS (加工中心內藏式)',
+                obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/E25-GMS(P.33-1).obj',
+                mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/E25-GMS(P.33-1).mtl',
+                specs: `<tr><th>最高轉速 RPM</th><td>24000-30000</td></tr><tr><th>刀具規格</th><td>ER25筒夾</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>功率</th><td>3.7 KW</td></tr><tr><th>前軸承直徑</th><td>Ø30</td></tr><tr><th>套筒外徑</th><td>Ø100</td></tr>`
+            },
+            'Ø100 (M25-GMSV)': {
+                id: 'M25', name: 'M25-GMSV (加工中心內藏式)',
+                obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/M25-GMSV(P.33-2).obj',
+                mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/M25-GMSV(P.33-2).mtl',
+                specs: `<tr><th>最高轉速 RPM</th><td>24000-30000</td></tr><tr><th>刀具規格</th><td>ISO25、HSK32E</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>編碼器</th><td>(OP)</td></tr><tr><th>功率</th><td>3.7 KW</td></tr><tr><th>前軸承直徑</th><td>Ø30</td></tr><tr><th>套筒外徑</th><td>Ø100</td></tr><tr><th>備註</th><td>氣壓換刀</td></tr>`
+            },
+            'Ø120': { isPlaceholder: true }, 'Ø140': { isPlaceholder: true }, 'Ø150': { isPlaceholder: true },
+            'Ø170': { isPlaceholder: true }, 'Ø202': { isPlaceholder: true },
+            'Ø210 (H6-HMSC-QA)': {
+                id: 'H6', name: 'H6-HMSC-QA (加工中心內藏式)',
+                obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/H6-HMSC-QAC(P.28).obj',
+                mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/H6-HMSC-QAC(P.28).mtl',
+                specs: `<tr><th>最高轉速 RPM</th><td>20000 - 24000</td></tr><tr><th>刀具規格</th><td>HSK63A</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>功率</th><td>18 KW</td></tr><tr><th>前軸承直徑</th><td>Ø65</td></tr><tr><th>套筒外徑</th><td>Ø210</td></tr><tr><th>中心出水 / 環形噴水</th><td>(OP) / (ST)</td></tr><tr><th>備註</th><td>油壓打刀<br />氣壓回位</td></tr>`
+            },
+            'Ø240': { isPlaceholder: true }, 'Ø275': { isPlaceholder: true }, 'Ø300': { isPlaceholder: true }
+        }
+    },
+    'internal_grinding': {
+        'label': '2. 選擇套筒外徑 (型號)：',
+        'options': {
+            'Ø80 (G08-QMS)': {
+                id: 'G08', name: 'G08-QMS (內藏式內徑研磨)',
+                obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G08-QMS(P.46).obj',
+                mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G08-QMS(P.46).mtl',
+                specs: `<tr><th>最高轉速 RPM</th><td>60000</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>功率</th><td>5 KW</td></tr><tr><th>前軸承直徑</th><td>Ø15</td></tr><tr><th>套筒外徑</th><td>Ø80</td></tr><tr><th>鼻端內牙</th><td>M8 x P1.25</td></tr>`
+            },
+            'Ø120 (G28-LMSN)': {
+                id: 'G28', name: 'G28-LMSN (內藏式內徑研磨)',
+                obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G28-LMSN(P.47).obj',
+                mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G28-LMSN(P.47).mtl',
+                specs: `<tr><th>最高轉速 RPM</th><td>10000 / 20000 / 30000 / 36000</td></tr><tr><th>軸承數目</th><td>4-5</td></tr><tr><th>功率</th><td>8.2 KW</td></tr><tr><th>前軸承直徑</th><td>Ø40</td></tr><tr><th>套筒外徑</th><td>Ø120</td></tr><tr><th>鼻端內牙</th><td>M28 x P2.0</td></tr>`
+            }
+        }
+    },
+    'dresser': {
+        'label': '2. 選擇鼻端外徑 (型號)：',
+        'options': {
+            'Ø30 (G0B-PMS)': {
+                id: 'G0B', name: 'G0B-PMS (磨床內藏式修砂輪)',
+                obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G0B-PMS(P.51).obj',
+                mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/G0B-PMS(P.51).mtl',
+                specs: `<tr><th>最高轉速 RPM</th><td>10000</td></tr><tr><th>軸承數目</th><td>4</td></tr><tr><th>功率</th><td>2 KW</td></tr><tr><th>前軸承直徑</th><td>Ø30</td></tr><tr><th>鼻端外徑</th><td>Ø30</td></tr><tr><th>套筒尺寸</th><td>方形 80</td></tr>`
+            }
+        }
+    },
+    'five_axis': {
+        'label': '2. 選擇傳動方式：',
+        'options': {
+            '蝸輪蝸桿': {
+                'tools': {
+                    '#25 (RM25-GMS-T)': {
+                        name: 'RM25-GMS-T',
+                        obj: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/RM25-GMT-T.obj',
+                        mtl: 'https://raw.githubusercontent.com/abbagodxyz-creator/microlab/refs/heads/main/RM25-GMT-T.mtl',
+                        specs: `
+                            <div class="table-title">主軸技術規格</div>
+                            <table id="spec-table">
+                                <tbody>
+                                    <tr>
+                                        <th>主軸型號</th>
+                                        <td class="highlight-val" style="text-align: center;">RM25-GMS-T</td>
+                                        <td class="highlight-val" style="text-align: center;">RH3-GMS-T</td>
+                                    </tr>
+                                    <tr>
+                                        <th>刀具</th>
+                                        <td style="text-align: center;">ISO25</td>
+                                        <td style="text-align: center;">HSK32E</td>
+                                    </tr>
+                                    <tr>
+                                        <th>轉速</th>
+                                        <td colspan="2" style="text-align: center;">18000-24000 rpm</td>
+                                    </tr>
+                                    <tr>
+                                        <th>功率</th>
+                                        <td colspan="2" style="text-align: center;">5.5 KW</td>
+                                    </tr>
+                                    <tr>
+                                        <th>標配</th>
+                                        <td colspan="2" style="text-align: center;">迷宮吹氣</td>
+                                    </tr>
+                                    <tr>
+                                        <th>選配</th>
+                                        <td colspan="2" style="text-align: center;">編碼器</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <div class="table-title">轉軸技術規格 (JEE-WM)</div>
+                            <table id="spec-table">
+                                <tbody>
+                                    <tr>
+                                        <th>轉軸型號</th>
+                                        <td class="highlight-val">JEE-WM</td>
+                                    </tr>
+                                    <tr>
+                                        <th>傳動方式</th>
+                                        <td>蝸輪蝸桿</td>
+                                    </tr>
+                                    <tr>
+                                        <th>最高轉速</th>
+                                        <td>40 rpm</td>
+                                    </tr>
+                                    <tr>
+                                        <th>搖擺角度</th>
+                                        <td>&plusmn;120∘</td>
+                                    </tr>
+                                    <tr>
+                                        <th>出管線</th>
+                                        <td>蛇管型</td>
+                                    </tr>
+                                    <tr>
+                                        <th>標配</th>
+                                        <td>聯軸器</td>
+                                    </tr>
+                                    <tr>
+                                        <th>可選配</th>
+                                        <td>
+                                            1. 環抱煞車<br />
+                                            2. 光學尺<br />
+                                            3. 分流器型
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        `
+                    },
+                    '#30': { isPlaceholder: true }, '#40': { isPlaceholder: true }
+                }
+            },
+            'DD馬達': {
+                'tools': { '#40': { isPlaceholder: true }, '#50': { isPlaceholder: true } }
+            }
+        }
+    }
+};
+
+const categorySelect = document.getElementById('category-select');
+const specSelect = document.getElementById('spec-select');
+const specLabel = document.getElementById('spec-label');
+const thirdLayerGroup = document.getElementById('third-layer-group');
+const toolSelect = document.getElementById('tool-select');
+const specContent = document.getElementById('spec-content');
+
+function updateSpecOptions() {
+    const catKey = categorySelect.value;
+    const catData = productDatabase[catKey];
+    specLabel.innerText = catData.label;
+    specSelect.innerHTML = '';
+
+    Object.keys(catData.options).forEach(opt => {
+        const el = document.createElement('option');
+        el.value = opt; el.textContent = opt;
+        specSelect.appendChild(el);
+    });
+
+    if (catKey === 'five_axis') {
+        thirdLayerGroup.style.display = 'block';
+        updateToolOptions();
+    } else {
+        thirdLayerGroup.style.display = 'none';
+        handleProductChange();
+    }
+}
+
+function updateToolOptions() {
+    const catKey = categorySelect.value;
+    const specKey = specSelect.value;
+    const tools = productDatabase[catKey].options[specKey].tools;
+    toolSelect.innerHTML = '';
+
+    Object.keys(tools).forEach(t => {
+        const el = document.createElement('option');
+        el.value = t; el.textContent = t;
+        toolSelect.appendChild(el);
+    });
+    handleProductChange();
+}
+
+function handleProductChange() {
+    const catKey = categorySelect.value;
+    const specKey = specSelect.value;
+    let product;
+
+    if (catKey === 'five_axis') {
+        product = productDatabase[catKey].options[specKey].tools[toolSelect.value];
+    } else {
+        product = productDatabase[catKey].options[specKey];
+    }
+
+    if (product && !product.isPlaceholder) {
+        loadModel(product);
+    } else {
+        if (currentModel) scene.remove(currentModel);
+        specContent.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">該規格目前暫無 3D 模型資料</div>';
+        document.getElementById('info').innerText = "尚未提供模型";
+        document.getElementById('loading-label').style.display = 'none';
+    }
+}
+
+function loadModel(product) {
+    document.getElementById('loading-label').style.display = 'block';
+    
+    // 渲染規格表格
+    if (categorySelect.value === 'five_axis') {
+        specContent.innerHTML = product.specs;
+    } else {
+        specContent.innerHTML = `<div class="table-title">技術規格</div><table id="spec-table">${product.specs}</table>`;
+    }
+
+    if (currentModel) scene.remove(currentModel);
+
+    const mtlLoader = new MTLLoader();
+    mtlLoader.setCrossOrigin('anonymous');
+    mtlLoader.load(product.mtl, (materials) => {
+        materials.preload();
+        const objLoader = new OBJLoader();
+        objLoader.setMaterials(materials);
+        objLoader.load(product.obj, (object) => {
+            
+            // --- 調整 PBR 材質參數，使其不那麼黑且呈現飽滿質感 ---
+            object.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    const oldColor = child.material.color;
+                    
+                    // 判斷是否為黑色零件 (當 rgb 都極低時判定為黑色)
+                    const isBlackPart = (oldColor.r < 0.1 && oldColor.g < 0.1 && oldColor.b < 0.1);
+
+                    child.material = new THREE.MeshStandardMaterial({
+                        color: oldColor,
+                        // 金屬度：銀色稍微調低 (0.75)，不再刺眼，呈現拉絲鋼感；黑色調低，消除多餘反射
+                        metalness: isBlackPart ? 0.2 : 0.75, 
+                        // 粗糙度：銀色稍微調高 (0.22)，柔化反射，讓本體看起來更飽滿；黑色降低粗糙度，帶一點光澤
+                        roughness: isBlackPart ? 0.45 : 0.22 
+                    });
+                }
+            });
+
+            currentModel = object;
+            scene.add(currentModel);
+            
+            const box = new THREE.Box3().setFromObject(currentModel);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            
+            currentModel.position.sub(center); 
+            camera.position.set(0, maxDim * 0.4, maxDim * 1.8);
+            controls.target.set(0, 0, 0);
+            controls.update();
+            
+            document.getElementById('info').innerText = product.name;
+            document.getElementById('loading-label').style.display = 'none';
+        });
+    });
+}
+
+categorySelect.addEventListener('change', updateSpecOptions);
+specSelect.addEventListener('change', () => {
+    if (categorySelect.value === 'five_axis') updateToolOptions();
+    else handleProductChange();
+});
+toolSelect.addEventListener('change', handleProductChange);
+
+function animate() { 
+    requestAnimationFrame(animate); 
+    controls.update(); 
+    renderer.render(scene, camera); 
+}
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// 啟動初始化
+updateSpecOptions();
